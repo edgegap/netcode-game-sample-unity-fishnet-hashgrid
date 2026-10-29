@@ -22,7 +22,8 @@ The project is on Unity `2021.3.45f2`, the editor it was tested with; open it wi
 | Server lifecycle | `Assets/Edgegap/EdgegapServerLifecycle.cs` | In server builds, starts the FishNet server on `0.0.0.0:7770`. On Edgegap it reads the injected variables and stops the deployment when no one joins within 120 s or once everyone has left for 30 s. |
 | Persistence | `Assets/Edgegap/EdgegapPersistence.cs` | Keeps the `Edgegap` object alive across the MainMenu → BattleScene → MainMenu scene changes. |
 | Edgegap SDK | `Packages/manifest.json` | Git package from [edgegap-unity-sdk](https://github.com/edgegap/edgegap-unity-sdk), pinned to tag `3.5.6` (see below). |
-| Build helpers | `Assets/Edgegap/Editor/` | Command-line Linux server and client builds, plus scene setup. |
+| Edgegap plugin | `Packages/manifest.json` | The [Edgegap Unity plugin](https://github.com/edgegap/buildtool-unity-plugin) (`com.edgegap.unity-servers-plugin`, `#3.2.1`, Editor only): builds, containerizes, uploads and deploys the server from **Tools → Edgegap Server Hosting**. The project has no Dockerfile of its own; `.dockerignore` keeps the plugin's Docker context to `Builds/EdgegapServer/`. |
+| Build helpers | `Assets/Edgegap/Editor/` | `EdgegapPluginBuild` runs the plugin's **Build server** from the command line, `EdgegapClientBuild` builds test clients (WebGL or desktop), plus scene setup. |
 
 The server no longer relies on FishNet's **Start On Headless**: the lifecycle component starts it, so the same scene works for client and server builds without toggling anything.
 
@@ -40,32 +41,27 @@ To move to a newer SDK, change the tag in `Packages/manifest.json` to a newer re
 
 ## 1. Play locally (direct connection)
 
-1. Open this folder with Unity `2021.3.45f2` and install the **Linux Build Support (Mono)**, **Linux Dedicated Server Build Support** and **WebGL Build Support** modules.
-2. Build the server with **Tools → Edgegap → Build Linux Dedicated Server**. The output goes to `Builds/EdgegapServer/`.
-3. Run it in Docker:
+1. Open this folder with Unity `2021.3.45f2` and install the **Linux Build Support (Mono)**, **Linux Dedicated Server Build Support** and **WebGL Build Support** modules. Start Docker Desktop.
+2. Open **Tools → Edgegap Server Hosting**:
+   1. **Sign in with Edgegap** (or paste a token from **Get token**), then **Validate**.
+   2. **Build server**. The output goes to `Builds/EdgegapServer/`.
+   3. **Containerize with Docker**: **Image Name** `fishnet-server`, **Image Tag** empty (the plugin uses the current UTC time), default Dockerfile.
+   4. **Test Your Server Locally**: **Optional Docker Run Parameters** `-p 7770:7770`, then **Deploy local container**. Docker Desktop shows `Edgegap Server | Starting server on 0.0.0.0:7770.` The plugin passes mock Edgegap variables, so the server exits 120 s after start if nobody joins, or 30 s after the last player leaves; **Terminate** before the next run.
+3. Build the client from **File → Build Settings**, or from the command line:
    ```bash
-   docker build --platform linux/amd64 -t fishnet-server:local .
-   docker run --rm -p 7770:7770 fishnet-server:local
-   ```
-   The log shows `Edgegap Server | Starting server on 0.0.0.0:7770.` and `Not running on Edgegap, self-stop disabled.`
-4. Build the client from **File → Build Settings**, or from the command line:
-   ```bash
-   Unity -batchmode -quit -projectPath . -executeMethod EdgegapServerBuild.BuildClient -edgegapClientTarget webgl
+   Unity -batchmode -projectPath . -executeMethod EdgegapClientBuild.Build -edgegapClientTarget webgl
    ```
    Serve `Builds/Client/webgl` (for example `python -m http.server 8080`), open `http://localhost:8080` in two tabs and click **Start Game**. The defaults (`localhost`, `7770`, **Direct Use Wss** off) connect to the local server. Desktop builds (`-edgegapClientTarget win64`) work too, since Bayou supports native clients.
 
+Without the Editor (CI, scripted tests), `Unity -batchmode -projectPath . -executeMethod EdgegapPluginBuild.BuildServer` runs the plugin's **Build server**.
+
 ## 2. Play on an Edgegap server (direct connection)
 
-1. Push the image to your Edgegap registry. Your registry project, username and token are on the dashboard's **Container Registry** page.
-   ```bash
-   docker login registry.edgegap.com
-   docker build --platform linux/amd64 -t registry.edgegap.com/<project>/fishnet-server:v1 .
-   docker push registry.edgegap.com/<project>/fishnet-server:v1
-   ```
-2. In the [dashboard](https://app.edgegap.com), create an application and a version for that image:
-   - Port: name `gameport`, port `7770`, protocol **WS**, **TLS Upgrade** on. Edgegap terminates TLS, so browsers connect with `wss://` while the server speaks plain `ws`.
-   - Container registry username and token: set them, or deployments fail to pull the image.
-3. Deploy the version from the dashboard. On `MatchmakingSystem`, set **Direct Address** to the deployment's host (`<id>.pr.edgegap.net`), **Direct Port** to its external port, and tick **Direct Use Wss**. Rebuild the client and play.
+1. In the plugin, **Upload to Edgegap**: **Application Name** (for example `fishnet-server`), then **Upload image and Create app version**. The plugin pushes the image to your Edgegap registry and opens the dashboard's version form with the image and tag filled in. On it:
+   - Port: replace the form's default port with name `gameport`, port `7770`, protocol **WS**, **TLS Upgrade** on. Edgegap terminates TLS, so browsers connect with `wss://` while the server speaks plain `ws`.
+   - Registry credentials: if the form asks for them, use the username and token from the dashboard's **Container Registry** page, or deployments fail to pull the image.
+   - Keep the version name the plugin proposes (the image tag) and save.
+2. **Deploy to cloud** in the plugin (or Deploy on the version page). On `MatchmakingSystem`, set **Direct Address** to the deployment's host (`<id>.pr.edgegap.net`), **Direct Port** to its external port, and tick **Direct Use Wss**. Rebuild the client and play.
 
 The server stops its deployment 120 s after it starts if nobody joins, and 30 s after the last player leaves.
 
@@ -80,7 +76,7 @@ The server stops its deployment 120 s after it starts if nobody joins, and 30 s 
 
 ### Shipping a new build
 
-Build the server → push a new tag → create a new app version → in the matchmaker, **Stop → Edit** `application.version` **→ Start**.
+In the plugin, **Upload to Edgegap → Rebuild from Source** builds the server, containerizes it with a fresh timestamp tag and pushes it, then opens the version form again (set the `gameport` WS port with TLS Upgrade and save) → in the matchmaker, **Stop → Edit** `application.version` **→ Start**.
 
 ## Notes
 
