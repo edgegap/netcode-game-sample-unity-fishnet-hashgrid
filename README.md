@@ -1,5 +1,7 @@
 # FishNet on Edgegap
 
+![Add Edgegap matchmaking and dedicated game servers to FishNet's SpaceEdge WebGL sample in Unity.](docs/images/card.jpg)
+
 This guide will help you create a headless server on Edgegap for a Unity project using [Fishnet](https://github.com/FirstGearGames/FishNet) as its networking solution. Different versions of the sample are available depending on which version of Fishnet is used.
 
 The older projects are built around the “MatchmakingSystem” script. This script communicates with the Edgegap API to find live deployments of the available server for the game and if no available servers are found then it requests the Edgegap API to deploy a new instance of the game’s server for the client based on their location. This script explains the core concepts of communicating with the Edgegap API using the Unity HTTP Requests system and utilizing the data sent by the Edgegap API for making decisions for the game’s matchmaking.
