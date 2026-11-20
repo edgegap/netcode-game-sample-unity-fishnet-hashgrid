@@ -1,0 +1,10 @@
+# Unity editor state and generated folders in each project folder
+/*/[Ll]ibrary/
+/*/[Tt]emp/
+/*/[Oo]bj/
+/*/[Ll]ogs/
+/*/[Uu]ser[Ss]ettings/
+/*/[Mm]emoryCaptures/
+/*/.idea/
+/*/.vs/
+.DS_Store

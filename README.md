@@ -2,33 +2,23 @@
 
 ![Add Edgegap matchmaking and dedicated game servers to FishNet's SpaceEdge WebGL sample in Unity.](docs/images/card.jpg)
 
-This guide will help you create a headless server on Edgegap for a Unity project using [Fishnet](https://github.com/FirstGearGames/FishNet) as its networking solution. Different versions of the sample are available depending on which version of Fishnet is used.
+This sample shows how to host a Unity game built with [FishNet](https://github.com/FirstGearGames/FishNet) on Edgegap dedicated servers, with WebGL and desktop clients and optional matchmaking through the [Edgegap Matchmaker](https://docs.edgegap.com/learn/matchmaking). The game client never calls the Edgegap API and never holds an API token: the matchmaker starts the servers, and each server stops itself when no one joins or everyone leaves.
 
-The older projects are built around the “MatchmakingSystem” script. This script communicates with the Edgegap API to find live deployments of the available server for the game and if no available servers are found then it requests the Edgegap API to deploy a new instance of the game’s server for the client based on their location. This script explains the core concepts of communicating with the Edgegap API using the Unity HTTP Requests system and utilizing the data sent by the Edgegap API for making decisions for the game’s matchmaking.
-This game auto connects to the first instance found on the list of all the live server deployments for the game, this is to make testing easier and due to the fact that Edgegap free tier allows only 1 live server deployment for the game at a given time. But if a user is not using free tier then this matchmaking system can be really easily extended to give players an option to choose from all the available servers to connect to.
-
-The recommended project, `Fishnet_v4.1.6R_WebGL_Matchmaker`, does not call the Edgegap API from the client (see below).
-
-## Projects
+## Project
 
 | Folder | FishNet | Unity | What it shows |
 |---|---|---|---|
-| `Fishnet_v4.1.6R_WebGL_Matchmaker` | 4.1.6R (Bayou) | 2021.3.45f2 | **Recommended.** WebGL and desktop clients, servers that stop themselves, and no API token in the client. Connects directly to a server by default; the [Edgegap Matchmaker](https://docs.edgegap.com/learn/matchmaking) is an opt-in toggle. See its [README](Fishnet_v4.1.6R_WebGL_Matchmaker/README.md). |
-| `Fishnet_v4.1.6R_WebGL` | 4.1.6R (Bayou) | 2021.3.16f1 | WebGL client, `MatchmakingSystem` calling the Edgegap API directly. |
-| `Fishnet_v4.1.6R_EdgegapMatchmaker` | 4.1.6R (Tugboat) | 2021.3.16f1 | Legacy matchmaker (`selectors`/`filters` config). That config format isn't accepted by the current matchmaker, so use `Fishnet_v4.1.6R_WebGL_Matchmaker` instead. |
-| `Fishnet_v3.11.14`, `Fishnet_v2.5.2` | 3.x / 2.x (Tugboat) | 2021.3.10f1 | `MatchmakingSystem` calling the Edgegap API directly. |
+| `Fishnet_v4.1.6R_WebGL_Matchmaker` | 4.1.6R (Bayou) | 2021.3.45f2 | WebGL and desktop clients, servers that stop themselves, and no API token in the client. Connects directly to a server by default; the Edgegap Matchmaker is an opt-in toggle. See its [README](Fishnet_v4.1.6R_WebGL_Matchmaker/README.md). |
 
-The Unity column is the editor version each project was saved with (`ProjectSettings/ProjectVersion.txt`).
-
-**Do not use the `MatchmakingSystem` pattern in production.** In `Fishnet_v4.1.6R_WebGL`, `Fishnet_v3.11.14` and `Fishnet_v2.5.2`, the game client calls the Edgegap API itself, with an Edgegap API token typed into the `AuthHeaderValue` field of `MatchmakingSystem` (`Fishnet_v4.1.6R_EdgegapMatchmaker` still contains the script, though its scenes don't use it). The repository ships only a placeholder there, but the field is still there: any token you put in it ends up in every build, anyone with a build can read it, and it grants full access to your Edgegap account. Only use these projects for local testing with a token you can revoke. Real games should let a matchmaker or a backend you control start servers, as `Fishnet_v4.1.6R_WebGL_Matchmaker` does.
+The Unity column is the editor version the project was saved with (`ProjectSettings/ProjectVersion.txt`).
 
 ### Unity version
 
-The recommended project was tested with Unity `2021.3.45f2`; open it with that exact version. Unity 2021.3 is out of Unity's support window. Newer editors (2022.3 LTS, Unity 6) are untested for this sample, and the project has not been upgraded to them. The older projects were saved with earlier 2021.3 patch releases (see the table) and have not been re-tested.
+Open the project with Unity `2021.3.45f2`, the exact version it was built with.
 
 ### Playing alone
 
-**Playing alone:** matchmaking is off by default in `Fishnet_v4.1.6R_WebGL_Matchmaker`, so a single client connects directly to `localhost:7770` (or the server address you set) and plays on its own. With the matchmaker turned on, the shipped `matchmaker-config.json` (matchmaker `3.3.2`) matches 2 to 4 players, with a 20 s expansion that lowers the minimum to 1 and a 30 s ticket expiration. With the earlier 5-minute expiration, a lone ticket in our tests did not get a server at the expansion; it only reached `HOST_ASSIGNED` around its expiration. The 30 s expiration keeps that wait short; the lone-player case was not re-tested with it. Test the matchmaker with two clients.
+**Playing alone:** matchmaking is off by default, so a single client connects directly to `localhost:7770` (or the server address you set) and plays on its own. With the matchmaker turned on, the shipped `matchmaker-config.json` (matchmaker `3.3.2`) matches 2 to 4 players, with a 20 s expansion that lowers the minimum to 1 and a 30 s ticket expiration. Test the matchmaker with two clients.
 
 ### Known limitation
 
@@ -36,24 +26,24 @@ The recommended project was tested with Unity `2021.3.45f2`; open it with that e
 
 ## Tutorial
 
-To make sure the projects open correctly in the Unity editor, clone the repo via the `git clone [URL]` command. 
+To make sure the project opens correctly in the Unity editor, clone the repo with `git clone https://github.com/edgegap/netcode-game-sample-unity-fishnet-hashgrid`.
 
-To test a sample project, select one of the available folders and open it with the Unity Hub.
+Open the `Fishnet_v4.1.6R_WebGL_Matchmaker` folder with the Unity Hub, then follow its [README](Fishnet_v4.1.6R_WebGL_Matchmaker/README.md).
 
-You can see the full documentation for the [base Fishnet example here](https://docs.edgegap.com/docs/sample-projects/fishnet-on-edgegap) or for [Fishnet with WebGL here](https://docs.edgegap.com/docs/sample-projects/fishnet-webgl).
+The full walkthrough is in the Edgegap docs: [FishNet WebGL](https://docs.edgegap.com/docs/sample-projects/fishnet-webgl). For FishNet on Edgegap in general, see [FishNet](https://docs.edgegap.com/docs/sample-projects/fishnet-on-edgegap).
 
 ## Edgegap packages
 
 | Project | Package | Version |
 |---|---|---|
 | `Fishnet_v4.1.6R_WebGL_Matchmaker` | [Edgegap Unity SDK](https://github.com/edgegap/edgegap-unity-sdk) (`com.edgegap.unity-sdk`) | tag `3.5.6` |
-| the other projects | [Edgegap Unity plugin](https://github.com/edgegap/edgegap-unity-plugin) (`com.edgegap.unity-servers-plugin`) | pinned to the commit already recorded in each project's `Packages/packages-lock.json` |
+| `Fishnet_v4.1.6R_WebGL_Matchmaker` | [Edgegap Unity plugin](https://github.com/edgegap/buildtool-unity-plugin) (`com.edgegap.unity-servers-plugin`) | tag `3.2.2` |
 
 ## Asset Store packages
 
-Every project folder bundles the same free third-party packs. Their authors keep their rights; they are not covered by this repository's MIT licence. If you reuse them outside this sample, get them from their source and follow their terms.
+The project bundles these free third-party packs. Their authors keep their rights; they are not covered by this repository's MIT licence. If you reuse them outside this sample, get them from their source and follow their terms.
 
-| Pack | Folder in each project | Source | Licence |
+| Pack | Folder in the project | Source | Licence |
 |---|---|---|---|
 | Cartoon FX Free, by Jean Moreno (JMO) | `Assets/JMO Assets/` | Unity Asset Store, now [Cartoon FX Remaster Free](https://assetstore.unity.com/packages/p/cartoon-fx-remaster-free-109565) (the old effects are in its legacy folder) | Standard Unity Asset Store EULA |
 | Star Sparrow Modular Spaceship | `Assets/StarSparrow/` | [Unity Asset Store](https://assetstore.unity.com/packages/3d/vehicles/space/star-sparrow-modular-spaceship-73167) | Standard Unity Asset Store EULA |
