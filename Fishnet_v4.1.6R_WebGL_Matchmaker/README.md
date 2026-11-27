@@ -41,7 +41,7 @@ To move to a newer SDK, change the tag in `Packages/manifest.json` to a newer re
 
 ## 1. Play locally (direct connection)
 
-1. Open this folder with Unity `2021.3.45f2` and install the **Linux Build Support (Mono)**, **Linux Dedicated Server Build Support** and **WebGL Build Support** modules. Start Docker Desktop.
+1. Open this folder with Unity `2021.3.45f2` and install the **Linux Build Support (Mono)**, **Linux Dedicated Server Build Support** and **WebGL Build Support** modules. Start Docker Desktop. On Windows, keep the project in a short path such as `C:\devishnet-sample` (clone the repo there): the build reads files under `Library/PackageCache`, and a long path (for example a deep `OneDrive\Desktop\...` folder) fails the server build with a `DirectoryNotFoundException`. For a Windows desktop client, also install **Windows Build Support (IL2CPP)**, which the project's default scripting backend needs.
 2. Open **Tools → Edgegap Server Hosting**:
    1. **Sign in with Edgegap** (or paste a token from **Get token**), then **Validate**.
    2. **Build server**. The output goes to `Builds/EdgegapServer/`.
